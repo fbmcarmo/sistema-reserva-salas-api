@@ -1,5 +1,13 @@
-cat << 'EOF' > .gitignore
-node_modules/
+# Environment variables
 .env
-npm-debug.log
-EOF
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+
+# Build
+dist/

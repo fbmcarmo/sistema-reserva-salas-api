@@ -1,40 +1,40 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../../../shared/database/connection');
+const { DataTypes, Model } = require("sequelize");
+const database = require("../../../shared/database/connection");
 
-const Room = sequelize.define('Room', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  nome: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  descricao: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-  capacidade: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  localizacao: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  recursos: {
-    type: DataTypes.STRING, // Ex: "Projetor, TV, Wi-Fi"
-    allowNull: true,
-  },
-  status: {
-    type: DataTypes.ENUM('ATIVA', 'INATIVA'),
-    defaultValue: 'ATIVA',
-    allowNull: false,
-  },
-}, {
-  tableName: 'rooms',
-  timestamps: true,
-});
+class Room extends Model {
+    static initModel() {
+        Room.init(
+            {
+                id: {
+                    type: DataTypes.INTEGER,
+                    primaryKey: true,
+                    autoIncrement: true,
+                },
+
+                name: {
+                    type: DataTypes.STRING,
+                    allowNull: false,
+                },
+
+                capacity: {
+                    type: DataTypes.INTEGER,
+                    allowNull: false,
+                },
+
+                description: {
+                    type: DataTypes.TEXT,
+                    allowNull: true,
+                },
+            },
+            {
+                sequelize: database.getConnection(),
+                modelName: "Room",
+                tableName: "rooms",
+            }
+        );
+
+        return Room;
+    }
+}
 
 module.exports = Room;
