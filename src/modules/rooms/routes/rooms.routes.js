@@ -1,9 +1,13 @@
-const express = require("express");
-const RoomController = require("../controllers/RoomController");
+const { Router } = require('express');
+const RoomController = require('../controllers/RoomController');
 
-const router = express.Router();
+const roomRoutes = Router();
 
-const roomController = new RoomController();
+roomRoutes.post('/', RoomController.create);
+roomRoutes.get('/', RoomController.index);
+roomRoutes.get('/:id', RoomController.show);
+roomRoutes.put('/:id', RoomController.update);
+roomRoutes.delete('/:id', RoomController.delete);
 
 /**
  * @openapi
