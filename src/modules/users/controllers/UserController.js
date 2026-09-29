@@ -1,21 +1,59 @@
-const SequelizeUserRepository = require('../repositories/SequelizeUserRepository');
-const CreateUserService = require('../services/CreateUserService');
+const RegisterUserService = require("../services/RegisterUserService");
+const UserRepository = require("../repositories/UserRepository");
+const AppError = require("../../../shared/errors/AppError");
 
 class UserController {
-  async create(req, res, next) {
-    try {
-      const { nome, email, senha, role } = req.body;
-
-      const userRepository = new SequelizeUserRepository();
-      const createUserService = new CreateUserService(userRepository);
-
-      const user = await createUserService.execute({ nome, email, senha, role });
-
-      return res.status(201).json(user);
-    } catch (error) {
-      next(error);
+    constructor({
+        registerUserService = new RegisterUserService(),
+        userRepository = new UserRepository(),
+    } = {}) {
+        this.registerUserService = registerUserService;
+        this.userRepository = userRepository;
     }
-  }
+
+    register = async (req, res, next) => {
+        try {
+            const user = await this.registerUserService.execute(req.body);
+
+            return res.status(201).json({
+                message: "Usuário cadastrado com sucesso.",
+                user,
+            });
+        } catch (error) {
+            return next(error);
+        }
+    };
+
+    findAll = async (req, res, next) => {
+        try {
+            const users = await this.userRepository.findAll();
+
+            return res.status(200).json({ users });
+        } catch (error) {
+            return next(error);
+        }
+    };
+
+    findById = async (req, res, next) => {
+        try {
+            const user = await this.userRepository.findById(req.params.id);
+
+            if (!user) {
+                throw new AppError("Usuário não encontrado.", 404);
+            }
+
+            return res.status(200).json({
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                },
+            });
+        } catch (error) {
+            return next(error);
+        }
+    };
 }
 
-module.exports = new UserController();
+module.exports = UserController;
