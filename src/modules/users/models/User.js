@@ -26,6 +26,12 @@ class User extends Model {
                     type: DataTypes.STRING,
                     allowNull: false,
                 },
+
+                role: {
+                    type: DataTypes.STRING,
+                    allowNull: false,
+                    defaultValue: "USER",
+                },
             },
             {
                 sequelize: database.getConnection(),

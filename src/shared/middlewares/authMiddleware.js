@@ -1,32 +1,38 @@
-const jwt = require("jsonwebtoken");
+const JwtTokenService = require("../security/JwtTokenService");
+const AppError = require("../errors/AppError");
 
 class AuthMiddleware {
+    constructor({ jwtTokenService = new JwtTokenService() } = {}) {
+        this.jwtTokenService = jwtTokenService;
+    }
 
     authenticate = (req, res, next) => {
-
-        const token =
-            req.headers.authorization?.replace("Bearer ", "");
-
-        if (!token) {
-            return res.status(401).json({
-                message: "Token não informado.",
-            });
-        }
-
         try {
+            const authorizationHeader = req.headers.authorization;
 
-            const decoded =
-                jwt.verify(token, process.env.JWT_SECRET);
+            if (!authorizationHeader) {
+                throw new AppError("Token de autenticação não informado.", 401);
+            }
 
-            req.user = decoded;
+            const [scheme, token] = authorizationHeader.split(" ");
 
-            next();
+            if (scheme !== "Bearer" || !token) {
+                throw new AppError(
+                    "Formato de token inválido. Utilize Bearer <token>.",
+                    401
+                );
+            }
 
+            const decodedToken = this.jwtTokenService.verifyToken(token);
+
+            req.auth = {
+                userId: decodedToken.sub,
+                role: decodedToken.role,
+            };
+
+            return next();
         } catch (error) {
-
-            return res.status(401).json({
-                message: "Token inválido.",
-            });
+            return next(error);
         }
     };
 }
