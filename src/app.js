@@ -1,34 +1,50 @@
 const express = require("express");
+const swaggerUi = require("swagger-ui-express");
 
-const roomRoutes = require("./modules/rooms/routes/rooms.routes");
-const userRoutes = require("./modules/users/routes/users.routes");
-const authenticationRoutes = require(
-    "./modules/authentication/routes/authentication.routes"
-);
+const swaggerSpec = require("./shared/docs/swagger");
 
-const ErrorHandlerMiddleware = require("./shared/middlewares/ErrorHandlerMiddleware");
+const usersRoutes = require("./modules/users/routes/users.routes");
+const roomsRoutes = require("./modules/rooms/routes/rooms.routes");
+const reservationsRoutes = require("./modules/reservations/routes/reservations.routes");
+const authenticationRoutes = require("./modules/authentication/routes/authentication.routes");
 
 class App {
     constructor() {
         this.app = express();
 
-        this.middlewares();
-        this.routes();
-        this.errorHandlers();
+        this.configureMiddlewares();
+        this.configureSwagger();
+        this.configureRoutes();
     }
 
-    middlewares() {
+    configureMiddlewares() {
         this.app.use(express.json());
     }
 
-    routes() {
-        this.app.use("/rooms", roomRoutes);
-        this.app.use("/users", userRoutes);
-        this.app.use("/auth", authenticationRoutes);
+    configureSwagger() {
+        this.app.use(
+            "/api-docs",
+            swaggerUi.serve,
+            swaggerUi.setup(swaggerSpec)
+        );
     }
 
-    errorHandlers() {
-        this.app.use(ErrorHandlerMiddleware.handle);
+    configureRoutes() {
+        this.registerRoute("/users", usersRoutes);
+        this.registerRoute("/rooms", roomsRoutes);
+        this.registerRoute("/reservations", reservationsRoutes);
+        this.registerRoute("/auth", authenticationRoutes);
+    }
+
+    registerRoute(path, route) {
+        if (typeof route !== "function") {
+            throw new TypeError(
+                `A rota "${path}" não foi configurada corretamente. ` +
+                `Esperado um Express Router, mas recebido: ${typeof route}`
+            );
+        }
+
+        this.app.use(path, route);
     }
 
     getApp() {
