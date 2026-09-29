@@ -1,8 +1,45 @@
-const { Router } = require('express');
-const ReservationController = require('../controllers/ReservationController');
+const express = require("express");
 
-const reservationRoutes = Router();
+const ReservationController = require("../controllers/ReservationController");
 
-reservationRoutes.post('/', ReservationController.create);
+class ReservationRoutes {
+    constructor() {
+        this.router = express.Router();
+        this.reservationController = new ReservationController();
 
-module.exports = reservationRoutes;
+        this.configureRoutes();
+    }
+
+    configureRoutes() {
+        this.router.get(
+            "/",
+            this.reservationController.findAll
+        );
+
+        this.router.get(
+            "/:id",
+            this.reservationController.findById
+        );
+
+        this.router.post(
+            "/",
+            this.reservationController.create
+        );
+
+        this.router.put(
+            "/:id",
+            this.reservationController.update
+        );
+
+        this.router.delete(
+            "/:id",
+            this.reservationController.delete
+        );
+    }
+
+    getRouter() {
+        return this.router;
+    }
+}
+
+module.exports = new ReservationRoutes().getRouter();

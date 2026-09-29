@@ -9,6 +9,46 @@ const authorizationMiddleware = require(
 const router = express.Router();
 const userController = new UserController();
 
+/**
+ * @openapi
+ * /users/register:
+ *   post:
+ *     summary: Cadastrar usuário
+ *     description: Cria uma nova conta de usuário.
+ *     tags:
+ *       - Users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Bruno Moreira
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: bruno@email.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: senha123
+ *     responses:
+ *       201:
+ *         description: Usuário cadastrado com sucesso.
+ *       400:
+ *         description: Dados inválidos.
+ *       409:
+ *         description: E-mail já cadastrado.
+ */
+router.post("/register", userController.register);
+
 router.post("/register", userController.register);
 
 // A partir daqui, as rotas exigem autenticação.
