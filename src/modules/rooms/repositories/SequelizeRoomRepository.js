@@ -1,29 +1,43 @@
-const Room = require('../models/Room');
+const Room = require("../models/Room");
 
 class SequelizeRoomRepository {
-  async create(roomData) {
-    return await Room.create(roomData);
-  }
+    async create(roomData) {
+        return Room.create(roomData);
+    }
 
-  async findAll() {
-    return await Room.findAll();
-  }
+    async findAll() {
+        return Room.findAll({
+            order: [["id", "ASC"]],
+        });
+    }
 
-  async findById(id) {
-    return await Room.findByPk(id);
-  }
+    async findById(id) {
+        return Room.findByPk(id);
+    }
 
-  async update(id, updateData) {
-    const room = await this.findById(id);
-    if (!room) return null;
-    return await room.update(updateData);
-  }
+    async update(id, roomData) {
+        const room = await Room.findByPk(id);
 
-  async delete(id) {
-    const room = await this.findById(id);
-    if (!room) return null;
-    return await room.destroy();
-  }
+        if (!room) {
+            return null;
+        }
+
+        await room.update(roomData);
+
+        return room;
+    }
+
+    async delete(id) {
+        const room = await Room.findByPk(id);
+
+        if (!room) {
+            return null;
+        }
+
+        await room.destroy();
+
+        return room;
+    }
 }
 
 module.exports = SequelizeRoomRepository;

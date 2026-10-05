@@ -8,26 +8,26 @@ Reservation.initModel();
 
 User.hasMany(Reservation, {
     foreignKey: "userId",
-    as: "reservations"
+    as: "reservations",
 });
 
 Reservation.belongsTo(User, {
     foreignKey: "userId",
-    as: "user"
+    as: "user",
 });
 
 Room.hasMany(Reservation, {
     foreignKey: "roomId",
-    as: "reservations"
+    as: "reservations",
 });
 
 Reservation.belongsTo(Room, {
     foreignKey: "roomId",
-    as: "room"
+    as: "room",
 });
 
 module.exports = {
     User,
     Room,
-    Reservation
+    Reservation,
 };
