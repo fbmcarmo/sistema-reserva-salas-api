@@ -33,6 +33,16 @@ class AuthenticateUserService {
         email,
         password,
     }) {
+        if (
+            typeof email !== "string" ||
+            typeof password !== "string"
+        ) {
+            throw new AppError(
+                "E-mail e senha são obrigatórios.",
+                400
+            );
+        }
+
         const normalizedEmail =
             email.trim().toLowerCase();
 
