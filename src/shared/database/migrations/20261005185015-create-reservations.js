@@ -1,70 +1,67 @@
-"use strict";
-
 module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.createTable("reservations", {
             id: {
                 type: Sequelize.INTEGER,
-                primaryKey: true,
                 autoIncrement: true,
-                allowNull: false
+                primaryKey: true,
+                allowNull: false,
             },
 
             userId: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
-
                 references: {
                     model: "users",
-                    key: "id"
+                    key: "id",
                 },
-
                 onUpdate: "CASCADE",
-                onDelete: "CASCADE"
+                onDelete: "CASCADE",
             },
 
             roomId: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
-
                 references: {
                     model: "rooms",
-                    key: "id"
+                    key: "id",
                 },
-
                 onUpdate: "CASCADE",
-                onDelete: "CASCADE"
+                onDelete: "CASCADE",
             },
 
             startDate: {
                 type: Sequelize.DATE,
-                allowNull: false
+                allowNull: false,
             },
 
             endDate: {
                 type: Sequelize.DATE,
-                allowNull: false
+                allowNull: false,
             },
 
             status: {
-                type: Sequelize.STRING,
+                type: Sequelize.ENUM(
+                    "CONFIRMADA",
+                    "CANCELADA"
+                ),
                 allowNull: false,
-                defaultValue: "ACTIVE"
+                defaultValue: "CONFIRMADA",
             },
 
             createdAt: {
                 type: Sequelize.DATE,
-                allowNull: false
+                allowNull: false,
             },
 
             updatedAt: {
                 type: Sequelize.DATE,
-                allowNull: false
-            }
+                allowNull: false,
+            },
         });
     },
 
     async down(queryInterface) {
         await queryInterface.dropTable("reservations");
-    }
+    },
 };
