@@ -52,6 +52,7 @@ const swaggerOptions = {
 
     apis: [
         "./src/modules/**/*.routes.js",
+        "./src/shared/docs/schemas/*.js",
     ],
 
     failOnErrors: true,
