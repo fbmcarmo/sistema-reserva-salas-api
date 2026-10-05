@@ -78,7 +78,7 @@ router.get(
 
 /**
  * @openapi
- * /api/user/{id}:
+ * /api/users/{id}:
  *   get:
  *     summary: Buscar usuário
  *     description: Administradores podem consultar qualquer usuário. Usuários comuns podem consultar apenas o próprio cadastro.
@@ -105,7 +105,7 @@ router.get(
  *         description: Usuário não encontrado.
  */
 router.get(
-    "/user/:id",
+    "/users/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";
@@ -131,7 +131,7 @@ router.get(
 
 /**
  * @openapi
- * /api/user/{id}:
+ * /api/users/{id}:
  *   put:
  *     summary: Atualizar usuário
  *     description: Atualiza os dados de um usuário. Administradores podem atualizar qualquer usuário e usuários comuns podem atualizar apenas o próprio cadastro.
@@ -168,7 +168,7 @@ router.get(
  *         description: E-mail já utilizado.
  */
 router.put(
-    "/user/:id",
+    "/users/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";
@@ -194,7 +194,7 @@ router.put(
 
 /**
  * @openapi
- * /api/user/{id}:
+ * /api/users/{id}:
  *   delete:
  *     summary: Excluir usuário
  *     description: Exclui permanentemente um usuário. Administradores podem excluir qualquer usuário e usuários comuns podem excluir apenas o próprio cadastro.
@@ -221,7 +221,7 @@ router.put(
  *         description: Usuário não encontrado.
  */
 router.delete(
-    "/user/:id",
+    "/users/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";

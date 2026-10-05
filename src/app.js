@@ -3,10 +3,21 @@ const swaggerUi = require("swagger-ui-express");
 
 const swaggerSpec = require("./shared/docs/swagger");
 
-const usersRoutes = require("./modules/users/routes/users.routes");
-const roomsRoutes = require("./modules/rooms/routes/rooms.routes");
-const reservationsRoutes = require("./modules/reservations/routes/reservations.routes");
-const authenticationRoutes = require("./modules/authentication/routes/authentication.routes");
+const usersRoutes = require(
+    "./modules/users/routes/users.routes"
+);
+
+const roomsRoutes = require(
+    "./modules/rooms/routes/rooms.routes"
+);
+
+const reservationsRoutes = require(
+    "./modules/reservations/routes/reservations.routes"
+);
+
+const authenticationRoutes = require(
+    "./modules/authentication/routes/authentication.routes"
+);
 
 class App {
     constructor() {
@@ -30,10 +41,25 @@ class App {
     }
 
     configureRoutes() {
-        this.registerRoute("/api", usersRoutes);
-        this.registerRoute("/api", roomsRoutes);
-        this.registerRoute("/api", reservationsRoutes);
-        this.registerRoute("/api/auth", authenticationRoutes);
+        this.registerRoute(
+            "/api/auth",
+            authenticationRoutes
+        );
+
+        this.registerRoute(
+            "/api",
+            usersRoutes
+        );
+
+        this.registerRoute(
+            "/api",
+            roomsRoutes
+        );
+
+        this.registerRoute(
+            "/api",
+            reservationsRoutes
+        );
     }
 
     registerRoute(path, route) {
