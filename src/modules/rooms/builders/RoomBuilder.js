@@ -1,4 +1,5 @@
 class RoomBuilder {
+
     constructor() {
         this.room = {};
     }

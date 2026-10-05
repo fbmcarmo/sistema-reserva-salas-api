@@ -5,10 +5,29 @@ class RoomController {
 
     create = async (req, res, next) => {
         try {
-            const room = await this.roomService.create(req.body);
+            const room = await this.roomService.create(
+                req.body
+            );
 
-            return res.status(201).json(room);
+            return res.status(201).json({
+                message: "Sala criada com sucesso.",
+                room,
+            });
         } catch (error) {
+            console.error(
+                "========== ERRO AO CRIAR SALA =========="
+            );
+
+            console.error("message:", error.message);
+            console.error("name:", error.name);
+            console.error("parent:", error.parent);
+            console.error("original:", error.original);
+            console.error("sql:", error.sql);
+
+            console.error(
+                "========================================"
+            );
+
             return next(error);
         }
     };
