@@ -47,17 +47,17 @@ class App {
         );
 
         this.registerRoute(
-            "/api",
+            "/api/users",
             usersRoutes
         );
 
         this.registerRoute(
-            "/api",
+            "/api/rooms",
             roomsRoutes
         );
 
         this.registerRoute(
-            "/api",
+            "/api/reservations",
             reservationsRoutes
         );
     }
