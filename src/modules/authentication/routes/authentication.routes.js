@@ -86,6 +86,27 @@ router.use(
 
 /**
  * @openapi
+ * /api/auth/logout:
+ *   post:
+ *     summary: Encerrar sessão
+ *     description: Realiza o logout do usuário autenticado.
+ *     tags:
+ *       - Authentication
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout realizado com sucesso.
+ *       401:
+ *         description: Token não informado ou inválido.
+ */
+router.post(
+    "/logout",
+    authenticationController.logout
+);
+
+/**
+ * @openapi
  * /api/auth/me:
  *   get:
  *     summary: Consultar usuário autenticado
