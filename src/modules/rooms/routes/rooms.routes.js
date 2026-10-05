@@ -1,99 +1,66 @@
-const { Router } = require('express');
-const RoomController = require('../controllers/RoomController');
+const express = require("express");
 
-const roomRoutes = Router();
-
-roomRoutes.post('/', RoomController.create);
-roomRoutes.get('/', RoomController.index);
-roomRoutes.get('/:id', RoomController.show);
-roomRoutes.put('/:id', RoomController.update);
-roomRoutes.delete('/:id', RoomController.delete);
+const RoomBuilder = require("../builders/RoomBuilder");
+const RoomRepositoryBridge = require("../repositories/RoomRepositoryBridge");
+const SequelizeRoomRepository = require("../repositories/SequelizeRoomRepository");
+const RoomService = require("../services/RoomService");
+const RoomValidator = require("../validators/RoomValidator");
+const RoomController = require("../controllers/RoomController");
 
 /**
  * @openapi
  * /rooms:
- *   get:
- *     summary: Listar salas
- *     description: Retorna todas as salas cadastradas.
+ *   post:
+ *     summary: Criar uma sala
  *     tags:
  *       - Rooms
- *     security:
- *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RoomCreate'
+ *     responses:
+ *       201:
+ *         description: Sala criada com sucesso.
+ *       400:
+ *         description: Dados inválidos.
+ */
+ 
+/**
+ * @openapi
+ * /rooms:
+ *   get:
+ *     summary: Listar todas as salas
+ *     tags:
+ *       - Rooms
  *     responses:
  *       200:
  *         description: Lista de salas.
- *       401:
- *         description: Usuário não autenticado.
+ *       500:
+ *         description: Erro interno do servidor.
  */
-router.get("/", roomController.findAll);
-
-router.get("/", roomController.findAll);
 
 /**
  * @openapi
  * /rooms/{id}:
  *   get:
- *     summary: Buscar sala por ID
+ *     summary: Buscar uma sala pelo ID
  *     tags:
  *       - Rooms
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID da sala.
+ *         example: 1
  *     responses:
  *       200:
  *         description: Sala encontrada.
  *       404:
  *         description: Sala não encontrada.
- *       401:
- *         description: Usuário não autenticado.
  */
-router.get("/:id", roomController.findById);
-router.get("/:id", roomController.findById);
-
-/**
- * @openapi
- * /rooms:
- *   post:
- *     summary: Criar uma nova sala
- *     description: Cria uma nova sala no sistema.
- *     tags:
- *       - Rooms
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *             properties:
- *               name:
- *                 type: string
- *                 example: Sala de Reunião 01
- *               capacity:
- *                 type: integer
- *                 example: 10
- *     responses:
- *       201:
- *         description: Sala criada com sucesso.
- *       400:
- *         description: Dados inválidos.
- *       401:
- *         description: Usuário não autenticado.
- *       403:
- *         description: Usuário sem permissão.
- */
-router.post("/", roomController.create);
-
-router.post("/", roomController.create);
 
 /**
  * @openapi
@@ -102,39 +69,27 @@ router.post("/", roomController.create);
  *     summary: Atualizar uma sala
  *     tags:
  *       - Rooms
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: integer
+ *         example: 1
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 example: Sala de Reunião 02
- *               capacity:
- *                 type: integer
- *                 example: 20
+ *             $ref: '#/components/schemas/RoomUpdate'
  *     responses:
  *       200:
  *         description: Sala atualizada com sucesso.
  *       400:
  *         description: Dados inválidos.
- *       401:
- *         description: Usuário não autenticado.
  *       404:
  *         description: Sala não encontrada.
  */
-router.put("/:id", roomController.update);
-router.put("/:id", roomController.update);
 
 /**
  * @openapi
@@ -143,23 +98,81 @@ router.put("/:id", roomController.update);
  *     summary: Excluir uma sala
  *     tags:
  *       - Rooms
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: integer
+ *         example: 1
  *     responses:
  *       204:
  *         description: Sala excluída com sucesso.
- *       401:
- *         description: Usuário não autenticado.
  *       404:
  *         description: Sala não encontrada.
  */
-router.delete("/:id", roomController.delete);
-router.delete("/:id", roomController.delete);
 
-module.exports = router;
+class RoomRoutes {
+    constructor() {
+        this.router = express.Router();
+
+        const sequelizeRoomRepository =
+            new SequelizeRoomRepository();
+
+        const roomRepository =
+            new RoomRepositoryBridge(
+                sequelizeRoomRepository
+            );
+
+        const roomBuilder =
+            new RoomBuilder();
+
+        const roomValidator =
+            new RoomValidator();
+
+        const roomService =
+            new RoomService(
+                roomRepository,
+                roomBuilder,
+                roomValidator
+            );
+
+        this.roomController =
+            new RoomController(roomService);
+
+        this.configureRoutes();
+    }
+
+    configureRoutes() {
+        this.router.post(
+            "/",
+            this.roomController.create
+        );
+
+        this.router.get(
+            "/",
+            this.roomController.findAll
+        );
+
+        this.router.get(
+            "/:id",
+            this.roomController.findById
+        );
+
+        this.router.put(
+            "/:id",
+            this.roomController.update
+        );
+
+        this.router.delete(
+            "/:id",
+            this.roomController.delete
+        );
+    }
+
+    getRouter() {
+        return this.router;
+    }
+}
+
+module.exports = new RoomRoutes().getRouter();
