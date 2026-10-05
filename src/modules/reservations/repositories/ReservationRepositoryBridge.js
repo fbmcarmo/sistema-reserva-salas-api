@@ -1,6 +1,8 @@
 class ReservationRepositoryBridge {
+
     constructor(repositoryImplementation) {
-        this.repositoryImplementation = repositoryImplementation;
+        this.repositoryImplementation =
+            repositoryImplementation;
     }
 
     async create(reservationData) {
@@ -14,29 +16,24 @@ class ReservationRepositoryBridge {
     }
 
     async findById(id) {
-        return this.repositoryImplementation.findById(id);
+        return this.repositoryImplementation.findById(
+            id
+        );
     }
 
     async findByUserId(userId) {
-        return this.repositoryImplementation.findByUserId(userId);
-    }
-
-    async findByRoomId(roomId) {
-        return this.repositoryImplementation.findByRoomId(roomId);
+        return this.repositoryImplementation.findByUserId(
+            userId
+        );
     }
 
     async findConflictingReservation(
-        roomId,
-        startDate,
-        endDate,
-        reservationId
+        reservationData
     ) {
-        return this.repositoryImplementation.findConflictingReservation(
-            roomId,
-            startDate,
-            endDate,
-            reservationId
-        );
+        return this.repositoryImplementation
+            .findConflictingReservation(
+                reservationData
+            );
     }
 
     async update(id, reservationData) {
@@ -47,20 +44,12 @@ class ReservationRepositoryBridge {
     }
 
     async cancel(id) {
-        return this.repositoryImplementation.cancel(id);
-    }
-
-    async findAvailableReservations(
-        roomId,
-        startDate,
-        endDate
-    ) {
-        return this.repositoryImplementation.findAvailableReservations(
-            roomId,
-            startDate,
-            endDate
+        return this.repositoryImplementation.cancel(
+            id
         );
     }
 }
 
-module.exports = ReservationRepositoryBridge;
+module.exports =
+    ReservationRepositoryBridge;
+

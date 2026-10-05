@@ -1,13 +1,22 @@
-const Reservation = require("../models/Reservation");
+const { Op } = require("sequelize");
+
+const Reservation = require(
+    "../models/Reservation"
+);
 
 class SequelizeReservationRepository {
+
     async create(reservationData) {
-        return Reservation.create(reservationData);
+        return Reservation.create(
+            reservationData
+        );
     }
 
     async findAll() {
         return Reservation.findAll({
-            order: [["startDate", "ASC"]],
+            order: [
+                ["startDate", "ASC"],
+            ],
         });
     }
 
@@ -20,42 +29,38 @@ class SequelizeReservationRepository {
             where: {
                 userId,
             },
-            order: [["startDate", "ASC"]],
+            order: [
+                ["startDate", "ASC"],
+            ],
         });
     }
 
-    async findByRoomId(roomId) {
-        return Reservation.findAll({
-            where: {
-                roomId,
-            },
-            order: [["startDate", "ASC"]],
-        });
-    }
-
-    async findConflictingReservation(
+    async findConflictingReservation({
         roomId,
         startDate,
         endDate,
-        reservationId = null
-    ) {
-        const { Op } = require("sequelize");
-
+        reservationId = null,
+    }) {
         const where = {
             roomId,
 
             status: "CONFIRMADA",
 
-            startDate: {
-                [Op.lt]: endDate,
-            },
-
-            endDate: {
-                [Op.gt]: startDate,
-            },
+            [Op.and]: [
+                {
+                    startDate: {
+                        [Op.lt]: endDate,
+                    },
+                },
+                {
+                    endDate: {
+                        [Op.gt]: startDate,
+                    },
+                },
+            ],
         };
 
-        if (reservationId) {
+        if (reservationId !== null) {
             where.id = {
                 [Op.ne]: reservationId,
             };
@@ -67,19 +72,23 @@ class SequelizeReservationRepository {
     }
 
     async update(id, reservationData) {
-        const reservation = await Reservation.findByPk(id);
+        const reservation =
+            await Reservation.findByPk(id);
 
         if (!reservation) {
             return null;
         }
 
-        await reservation.update(reservationData);
+        await reservation.update(
+            reservationData
+        );
 
         return reservation;
     }
 
     async cancel(id) {
-        const reservation = await Reservation.findByPk(id);
+        const reservation =
+            await Reservation.findByPk(id);
 
         if (!reservation) {
             return null;
@@ -91,37 +100,7 @@ class SequelizeReservationRepository {
 
         return reservation;
     }
-
-    async findAvailableReservations(
-        roomId,
-        startDate,
-        endDate
-    ) {
-        const { Op } = require("sequelize");
-
-        return Reservation.findAll({
-            where: {
-                roomId,
-
-                status: "CONFIRMADA",
-
-                [Op.or]: [
-                    {
-                        startDate: {
-                            [Op.gte]: endDate,
-                        },
-                    },
-                    {
-                        endDate: {
-                            [Op.lte]: startDate,
-                        },
-                    },
-                ],
-            },
-
-            order: [["startDate", "ASC"]],
-        });
-    }
 }
 
-module.exports = SequelizeReservationRepository;
+module.exports =
+    SequelizeReservationRepository;

@@ -1,336 +1,266 @@
 const express = require("express");
 
-const ReservationBuilder = require("../builders/ReservationBuilder");
+const ReservationController = require(
+    "../controllers/ReservationController"
+);
 
-const ReservationRepositoryBridge =
-    require("../repositories/ReservationRepositoryBridge");
+const ReservationService = require(
+    "../services/ReservationService"
+);
 
-const SequelizeReservationRepository =
-    require("../repositories/SequelizeReservationRepository");
+const ReservationRepositoryBridge = require(
+    "../repositories/ReservationRepositoryBridge"
+);
 
-const ReservationService =
-    require("../services/ReservationService");
+const SequelizeReservationRepository = require(
+    "../repositories/SequelizeReservationRepository"
+);
 
-const ReservationValidator =
-    require("../validators/ReservationValidator");
+const UserRepositoryBridge = require(
+    "../../users/repositories/UserRepositoryBridge"
+);
 
-const ReservationController =
-    require("../controllers/ReservationController");
+const SequelizeUserRepository = require(
+    "../../users/repositories/SequelizeUserRepository"
+);
 
-class ReservationRoutes {
-    constructor() {
-        this.router = express.Router();
+const RoomRepositoryBridge = require(
+    "../../rooms/repositories/RoomRepositoryBridge"
+);
 
-        const sequelizeReservationRepository =
-            new SequelizeReservationRepository();
+const SequelizeRoomRepository = require(
+    "../../rooms/repositories/SequelizeRoomRepository"
+);
 
-        const reservationRepository =
-            new ReservationRepositoryBridge(
-                sequelizeReservationRepository
-            );
+const ReservationValidator = require(
+    "../validators/ReservationValidator"
+);
 
-        const reservationBuilder =
-            new ReservationBuilder();
+const authMiddleware = require(
+    "../../../shared/middlewares/AuthMiddleware"
+);
 
-        const reservationValidator =
-            new ReservationValidator();
+const router = express.Router();
 
-        const reservationService =
-            new ReservationService(
-                reservationRepository,
-                reservationBuilder,
-                reservationValidator
-            );
+const reservationRepository =
+    new ReservationRepositoryBridge(
+        new SequelizeReservationRepository()
+    );
 
-        this.reservationController =
-            new ReservationController(
-                reservationService
-            );
+const userRepository =
+    new UserRepositoryBridge(
+        new SequelizeUserRepository()
+    );
 
-        this.configureRoutes();
-    }
+const roomRepository =
+    new RoomRepositoryBridge(
+        new SequelizeRoomRepository()
+    );
 
-    configureRoutes() {
-        /**
-         * @openapi
-         * /reservations:
-         *   post:
-         *     summary: Criar uma reserva
-         *     description: Cria uma nova reserva para uma sala em um determinado período. A API verifica se o horário é válido e se existe conflito com outra reserva confirmada.
-         *     tags:
-         *       - Reservations
-         *     requestBody:
-         *       required: true
-         *       content:
-         *         application/json:
-         *           schema:
-         *             $ref: '#/components/schemas/ReservationCreate'
-         *     responses:
-         *       201:
-         *         description: Reserva criada com sucesso.
-         *         content:
-         *           application/json:
-         *             schema:
-         *               $ref: '#/components/schemas/Reservation'
-         *       400:
-         *         description: Dados inválidos ou horário inválido.
-         *       409:
-         *         description: A sala já está reservada no período informado.
-         */
-        this.router.post(
-            "/",
-            this.reservationController.create
-        );
+const reservationValidator =
+    new ReservationValidator();
 
-        /**
-         * @openapi
-         * /reservations:
-         *   get:
-         *     summary: Listar todas as reservas
-         *     description: Retorna todas as reservas cadastradas no sistema.
-         *     tags:
-         *       - Reservations
-         *     responses:
-         *       200:
-         *         description: Lista de reservas.
-         *         content:
-         *           application/json:
-         *             schema:
-         *               type: array
-         *               items:
-         *                 $ref: '#/components/schemas/Reservation'
-         */
-        this.router.get(
-            "/",
-            this.reservationController.findAll
-        );
+const reservationService =
+    new ReservationService({
+        reservationRepository,
+        userRepository,
+        roomRepository,
+        reservationValidator,
+    });
 
-        /**
-         * @openapi
-         * /reservations/availability:
-         *   get:
-         *     summary: Consultar disponibilidade de uma sala
-         *     description: Verifica se uma sala está disponível para reserva durante o período informado.
-         *     tags:
-         *       - Reservations
-         *     parameters:
-         *       - in: query
-         *         name: roomId
-         *         required: true
-         *         description: Identificador da sala.
-         *         schema:
-         *           type: integer
-         *         example: 2
-         *
-         *       - in: query
-         *         name: startDate
-         *         required: true
-         *         description: Data e horário de início da reserva.
-         *         schema:
-         *           type: string
-         *           format: date-time
-         *         example: "2026-10-10T14:00:00.000Z"
-         *
-         *       - in: query
-         *         name: endDate
-         *         required: true
-         *         description: Data e horário de término da reserva.
-         *         schema:
-         *           type: string
-         *           format: date-time
-         *         example: "2026-10-10T16:00:00.000Z"
-         *
-         *     responses:
-         *       200:
-         *         description: Disponibilidade consultada com sucesso.
-         *         content:
-         *           application/json:
-         *             schema:
-         *               $ref: '#/components/schemas/ReservationAvailability'
-         *       400:
-         *         description: Horário inválido ou parâmetros obrigatórios não informados.
-         */
-        this.router.get(
-            "/availability",
-            this.reservationController.checkAvailability
-        );
+const reservationController =
+    new ReservationController(
+        reservationService
+    );
 
-        /**
-         * @openapi
-         * /reservations/user/{userId}:
-         *   get:
-         *     summary: Listar reservas de um usuário
-         *     description: Retorna todas as reservas pertencentes a um determinado usuário.
-         *     tags:
-         *       - Reservations
-         *     parameters:
-         *       - in: path
-         *         name: userId
-         *         required: true
-         *         description: Identificador do usuário.
-         *         schema:
-         *           type: integer
-         *         example: 1
-         *     responses:
-         *       200:
-         *         description: Reservas do usuário.
-         *         content:
-         *           application/json:
-         *             schema:
-         *               type: array
-         *               items:
-         *                 $ref: '#/components/schemas/Reservation'
-         *       404:
-         *         description: Usuário não encontrado.
-         */
-        this.router.get(
-            "/user/:userId",
-            this.reservationController.findByUserId
-        );
 
-        /**
-         * @openapi
-         * /reservations/room/{roomId}:
-         *   get:
-         *     summary: Listar reservas de uma sala
-         *     description: Retorna todas as reservas cadastradas para uma determinada sala.
-         *     tags:
-         *       - Reservations
-         *     parameters:
-         *       - in: path
-         *         name: roomId
-         *         required: true
-         *         description: Identificador da sala.
-         *         schema:
-         *           type: integer
-         *         example: 2
-         *     responses:
-         *       200:
-         *         description: Reservas da sala.
-         *         content:
-         *           application/json:
-         *             schema:
-         *               type: array
-         *               items:
-         *                 $ref: '#/components/schemas/Reservation'
-         *       404:
-         *         description: Sala não encontrada.
-         */
-        this.router.get(
-            "/room/:roomId",
-            this.reservationController.findByRoomId
-        );
+/**
+ * Todas as rotas de reservas exigem autenticação.
+ */
+router.use(
+    authMiddleware.authenticate
+);
 
-        /**
-         * @openapi
-         * /reservations/{id}:
-         *   get:
-         *     summary: Buscar reserva por ID
-         *     description: Retorna os dados de uma reserva específica.
-         *     tags:
-         *       - Reservations
-         *     parameters:
-         *       - in: path
-         *         name: id
-         *         required: true
-         *         description: Identificador da reserva.
-         *         schema:
-         *           type: integer
-         *         example: 1
-         *     responses:
-         *       200:
-         *         description: Reserva encontrada.
-         *         content:
-         *           application/json:
-         *             schema:
-         *               $ref: '#/components/schemas/Reservation'
-         *       404:
-         *         description: Reserva não encontrada.
-         */
-        this.router.get(
-            "/:id",
-            this.reservationController.findById
-        );
 
-        /**
-         * @openapi
-         * /reservations/{id}:
-         *   put:
-         *     summary: Atualizar uma reserva
-         *     description: Atualiza os dados de uma reserva existente. A alteração de sala ou horário também passa pela validação de conflitos.
-         *     tags:
-         *       - Reservations
-         *     parameters:
-         *       - in: path
-         *         name: id
-         *         required: true
-         *         description: Identificador da reserva.
-         *         schema:
-         *           type: integer
-         *         example: 1
-         *     requestBody:
-         *       required: true
-         *       content:
-         *         application/json:
-         *           schema:
-         *             $ref: '#/components/schemas/ReservationUpdate'
-         *     responses:
-         *       200:
-         *         description: Reserva atualizada com sucesso.
-         *         content:
-         *           application/json:
-         *             schema:
-         *               $ref: '#/components/schemas/Reservation'
-         *       400:
-         *         description: Dados ou horário inválido.
-         *       404:
-         *         description: Reserva não encontrada.
-         *       409:
-         *         description: A sala já está reservada no período informado.
-         */
-        this.router.put(
-            "/:id",
-            this.reservationController.update
-        );
+/**
+ * @openapi
+ * /api/reservations:
+ *   get:
+ *     summary: Listar reservas
+ *     tags:
+ *       - Reservations
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de reservas.
+ *       401:
+ *         description: Usuário não autenticado.
+ *       403:
+ *         description: Acesso permitido somente para administradores.
+ */
+router.get(
+    "/",
+    authMiddleware.authorizeAdmin,
+    reservationController.findAll
+);
 
-        /**
-         * @openapi
-         * /reservations/{id}/cancel:
-         *   patch:
-         *     summary: Cancelar uma reserva
-         *     description: Cancela uma reserva existente alterando seu status para CANCELADA. A reserva permanece armazenada para manter o histórico.
-         *     tags:
-         *       - Reservations
-         *     parameters:
-         *       - in: path
-         *         name: id
-         *         required: true
-         *         description: Identificador da reserva.
-         *         schema:
-         *           type: integer
-         *         example: 1
-         *     responses:
-         *       200:
-         *         description: Reserva cancelada com sucesso.
-         *         content:
-         *           application/json:
-         *             schema:
-         *               $ref: '#/components/schemas/Reservation'
-         *       400:
-         *         description: A reserva já está cancelada.
-         *       404:
-         *         description: Reserva não encontrada.
-         */
-        this.router.patch(
-            "/:id/cancel",
-            this.reservationController.cancel
-        );
-    }
 
-    getRouter() {
-        return this.router;
-    }
-}
+/**
+ * @openapi
+ * /api/reservations/my:
+ *   get:
+ *     summary: Listar minhas reservas
+ *     tags:
+ *       - Reservations
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Reservas do usuário autenticado.
+ *       401:
+ *         description: Usuário não autenticado.
+ */
+router.get(
+    "/my",
+    reservationController.findMyReservations
+);
 
-module.exports =
-    new ReservationRoutes().getRouter();
+
+/**
+ * @openapi
+ * /api/reservations:
+ *   post:
+ *     summary: Criar uma reserva
+ *     tags:
+ *       - Reservations
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ReservationCreate'
+ *     responses:
+ *       201:
+ *         description: Reserva criada com sucesso.
+ *       400:
+ *         description: Dados inválidos.
+ *       401:
+ *         description: Usuário não autenticado.
+ *       404:
+ *         description: Sala ou usuário não encontrado.
+ *       409:
+ *         description: Sala já reservada no período.
+ */
+router.post(
+    "/",
+    reservationController.create
+);
+
+
+/**
+ * @openapi
+ * /api/reservations/{id}:
+ *   get:
+ *     summary: Buscar uma reserva
+ *     tags:
+ *       - Reservations
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: Reserva encontrada.
+ *       401:
+ *         description: Usuário não autenticado.
+ *       404:
+ *         description: Reserva não encontrada.
+ */
+router.get(
+    "/:id",
+    reservationController.findById
+);
+
+
+/**
+ * @openapi
+ * /api/reservations/{id}:
+ *   put:
+ *     summary: Alterar uma reserva
+ *     tags:
+ *       - Reservations
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ReservationUpdate'
+ *     responses:
+ *       200:
+ *         description: Reserva atualizada com sucesso.
+ *       401:
+ *         description: Usuário não autenticado.
+ *       403:
+ *         description: Sem permissão para alterar a reserva.
+ *       404:
+ *         description: Reserva não encontrada.
+ *       409:
+ *         description: Sala já reservada no período.
+ */
+router.put(
+    "/:id",
+    reservationController.update
+);
+
+
+/**
+ * @openapi
+ * /api/reservations/{id}:
+ *   delete:
+ *     summary: Cancelar uma reserva
+ *     tags:
+ *       - Reservations
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: Reserva cancelada com sucesso.
+ *       401:
+ *         description: Usuário não autenticado.
+ *       403:
+ *         description: Sem permissão para cancelar a reserva.
+ *       404:
+ *         description: Reserva não encontrada.
+ */
+router.delete(
+    "/:id",
+    reservationController.cancel
+);
+
+
+module.exports = router;
+

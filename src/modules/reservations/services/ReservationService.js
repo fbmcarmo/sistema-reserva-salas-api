@@ -1,56 +1,77 @@
-const AppError = require("../../../shared/errors/AppError");
+const AppError = require(
+    "../../../shared/errors/AppError"
+);
+
+const ReservationBuilder = require(
+    "../builders/ReservationBuilder"
+);
 
 class ReservationService {
-    constructor(
+
+    constructor({
         reservationRepository,
-        reservationBuilder,
-        reservationValidator
-    ) {
+        userRepository,
+        roomRepository,
+        reservationValidator,
+    }) {
         this.reservationRepository =
             reservationRepository;
 
-        this.reservationBuilder =
-            reservationBuilder;
+        this.userRepository =
+            userRepository;
+
+        this.roomRepository =
+            roomRepository;
 
         this.reservationValidator =
             reservationValidator;
     }
 
-    async create(reservationData) {
-        this.reservationValidator.validateCreate(
-            reservationData
-        );
+    async create({
+        userId,
+        roomId,
+        startDate,
+        endDate,
+    }) {
 
-        const {
+        this.reservationValidator.validateCreate({
             userId,
             roomId,
             startDate,
             endDate,
-        } = reservationData;
+        });
 
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+        await this.validateUser(userId);
 
-        const conflictingReservation =
-            await this.reservationRepository.findConflictingReservation(
-                roomId,
-                start,
-                end
+        await this.validateRoom(roomId);
+
+        const dates =
+            this.validateDates(
+                startDate,
+                endDate
             );
 
-        if (conflictingReservation) {
+        const conflict =
+            await this.reservationRepository
+                .findConflictingReservation({
+                    roomId,
+                    startDate: dates.startDate,
+                    endDate: dates.endDate,
+                });
+
+        if (conflict) {
             throw new AppError(
-                "A sala já está reservada nesse período.",
+                "A sala já está reservada neste período.",
                 409
             );
         }
 
         const reservation =
-            this.reservationBuilder
-                .setUserId(Number(userId))
-                .setRoomId(Number(roomId))
-                .setStartDate(start)
-                .setEndDate(end)
+            new ReservationBuilder()
+                .setUserId(userId)
+                .setRoomId(roomId)
+                .setStartDate(dates.startDate)
+                .setEndDate(dates.endDate)
                 .setStatus("CONFIRMADA")
                 .build();
 
@@ -65,7 +86,9 @@ class ReservationService {
 
     async findById(id) {
         const reservation =
-            await this.reservationRepository.findById(id);
+            await this.reservationRepository.findById(
+                id
+            );
 
         if (!reservation) {
             throw new AppError(
@@ -77,139 +100,92 @@ class ReservationService {
         return reservation;
     }
 
-    async findByUserId(userId) {
-        return this.reservationRepository.findByUserId(
-            userId
-        );
+    async findMyReservations(userId) {
+        return this.reservationRepository
+            .findByUserId(userId);
     }
 
-    async findByRoomId(roomId) {
-        return this.reservationRepository.findByRoomId(
-            roomId
-        );
-    }
-
-    async checkAvailability(
-        roomId,
-        startDate,
-        endDate
+    async update(
+        id,
+        userId,
+        role,
+        reservationData
     ) {
-        this.reservationValidator.validateDates(
-            startDate,
-            endDate
-        );
-
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-
-        const conflictingReservation =
-            await this.reservationRepository.findConflictingReservation(
-                roomId,
-                start,
-                end
-            );
-
-        return {
-            roomId: Number(roomId),
-            startDate: start,
-            endDate: end,
-            available: !conflictingReservation,
-        };
-    }
-
-    async update(id, reservationData) {
         const reservation =
             await this.findById(id);
 
-        if (
-            reservation.status === "CANCELADA"
-        ) {
-            throw new AppError(
-                "Uma reserva cancelada não pode ser alterada.",
-                400
-            );
-        }
-
-        const data = {};
+        this.validateOwnership(
+            reservation,
+            userId,
+            role
+        );
 
         const startDate =
             reservationData.startDate !== undefined
-                ? new Date(reservationData.startDate)
-                : new Date(reservation.startDate);
+                ? reservationData.startDate
+                : reservation.startDate;
 
         const endDate =
             reservationData.endDate !== undefined
-                ? new Date(reservationData.endDate)
-                : new Date(reservation.endDate);
-
-        this.reservationValidator.validateDates(
-            startDate,
-            endDate
-        );
+                ? reservationData.endDate
+                : reservation.endDate;
 
         const roomId =
             reservationData.roomId !== undefined
-                ? Number(reservationData.roomId)
+                ? reservationData.roomId
                 : reservation.roomId;
 
-        const conflictingReservation =
-            await this.reservationRepository.findConflictingReservation(
-                roomId,
+        const dates =
+            this.validateDates(
                 startDate,
-                endDate,
-                id
+                endDate
             );
 
-        if (conflictingReservation) {
+        if (
+            reservationData.roomId !== undefined
+        ) {
+            await this.validateRoom(roomId);
+        }
+
+        const conflict =
+            await this.reservationRepository
+                .findConflictingReservation({
+                    roomId,
+                    startDate: dates.startDate,
+                    endDate: dates.endDate,
+                    reservationId: reservation.id,
+                });
+
+        if (conflict) {
             throw new AppError(
-                "A sala já está reservada nesse período.",
+                "A sala já está reservada neste período.",
                 409
             );
         }
 
-        if (reservationData.userId !== undefined) {
-            data.userId =
-                Number(reservationData.userId);
-        }
-
-        if (reservationData.roomId !== undefined) {
-            data.roomId =
-                Number(reservationData.roomId);
-        }
-
-        if (reservationData.startDate !== undefined) {
-            data.startDate = startDate;
-        }
-
-        if (reservationData.endDate !== undefined) {
-            data.endDate = endDate;
-        }
-
-        if (reservationData.status !== undefined) {
-            if (
-                !["CONFIRMADA", "CANCELADA"].includes(
-                    reservationData.status
-                )
-            ) {
-                throw new AppError(
-                    "O status deve ser CONFIRMADA ou CANCELADA.",
-                    400
-                );
-            }
-
-            data.status =
-                reservationData.status;
-        }
-
         return this.reservationRepository.update(
             id,
-            data
+            {
+                roomId,
+                startDate: dates.startDate,
+                endDate: dates.endDate,
+            }
         );
     }
 
-    async cancel(id) {
+    async cancel(
+        id,
+        userId,
+        role
+    ) {
         const reservation =
             await this.findById(id);
+
+        this.validateOwnership(
+            reservation,
+            userId,
+            role
+        );
 
         if (
             reservation.status === "CANCELADA"
@@ -220,10 +196,104 @@ class ReservationService {
             );
         }
 
-        return this.reservationRepository.cancel(
+        await this.reservationRepository.cancel(
             id
         );
+
+        return {
+            message:
+                "Reserva cancelada com sucesso.",
+        };
+    }
+
+    async validateUser(userId) {
+        const user =
+            await this.userRepository.findById(
+                userId
+            );
+
+        if (!user) {
+            throw new AppError(
+                "Usuário não encontrado.",
+                404
+            );
+        }
+    }
+
+    async validateRoom(roomId) {
+        const room =
+            await this.roomRepository.findById(
+                roomId
+            );
+
+        if (!room) {
+            throw new AppError(
+                "Sala não encontrada.",
+                404
+            );
+        }
+
+        if (room.status === "INATIVA") {
+            throw new AppError(
+                "A sala está inativa.",
+                400
+            );
+        }
+    }
+
+    validateDates(
+        startDate,
+        endDate
+    ) {
+        const start =
+            new Date(startDate);
+
+        const end =
+            new Date(endDate);
+
+        if (
+            Number.isNaN(start.getTime()) ||
+            Number.isNaN(end.getTime())
+        ) {
+            throw new AppError(
+                "As datas informadas são inválidas.",
+                400
+            );
+        }
+
+        if (start >= end) {
+            throw new AppError(
+                "A data inicial deve ser anterior à data final.",
+                400
+            );
+        }
+
+        return {
+            startDate: start,
+            endDate: end,
+        };
+    }
+
+    validateOwnership(
+        reservation,
+        userId,
+        role
+    ) {
+        const isOwner =
+            reservation.userId === Number(userId);
+
+        const isAdmin =
+            role === "ADMIN";
+
+        if (!isOwner && !isAdmin) {
+            throw new AppError(
+                "Você não possui permissão para alterar esta reserva.",
+                403
+            );
+        }
     }
 }
 
-module.exports = ReservationService;
+module.exports =
+    ReservationService;
+
