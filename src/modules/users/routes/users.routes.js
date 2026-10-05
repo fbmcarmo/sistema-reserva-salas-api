@@ -44,57 +44,15 @@ const userController =
 
 const router = express.Router();
 
-/**
- * @openapi
- * /users/register:
- *   post:
- *     summary: Cadastrar usuário
- *     description: Cria uma nova conta de usuário.
- *     tags:
- *       - Users
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *             properties:
- *               name:
- *                 type: string
- *                 example: Bruno Moreira
- *               email:
- *                 type: string
- *                 format: email
- *                 example: bruno@email.com
- *               password:
- *                 type: string
- *                 format: password
- *                 example: senha123
- *     responses:
- *       201:
- *         description: Usuário cadastrado com sucesso.
- *       400:
- *         description: Dados inválidos.
- *       409:
- *         description: E-mail já cadastrado.
- */
-router.post(
-    "/register",
-    userController.register
-);
-
-// A partir daqui, as rotas exigem autenticação.
+// Todas as rotas de gerenciamento de usuários
+// exigem autenticação.
 router.use(
     authMiddleware.authenticate
 );
 
 /**
  * @openapi
- * /users:
+ * /api/users:
  *   get:
  *     summary: Listar usuários
  *     description: Retorna todos os usuários cadastrados. Somente administradores possuem acesso.
@@ -111,7 +69,7 @@ router.use(
  *         description: Usuário sem permissão.
  */
 router.get(
-    "/",
+    "/users",
     authorizationMiddleware.allowRoles(
         "ADMIN"
     ),
@@ -120,7 +78,7 @@ router.get(
 
 /**
  * @openapi
- * /users/{id}:
+ * /api/user/{id}:
  *   get:
  *     summary: Buscar usuário
  *     description: Administradores podem consultar qualquer usuário. Usuários comuns podem consultar apenas o próprio cadastro.
@@ -147,7 +105,7 @@ router.get(
  *         description: Usuário não encontrado.
  */
 router.get(
-    "/:id",
+    "/user/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";
@@ -173,7 +131,7 @@ router.get(
 
 /**
  * @openapi
- * /users/{id}:
+ * /api/user/{id}:
  *   put:
  *     summary: Atualizar usuário
  *     description: Atualiza os dados de um usuário. Administradores podem atualizar qualquer usuário e usuários comuns podem atualizar apenas o próprio cadastro.
@@ -194,19 +152,7 @@ router.get(
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 example: Bruno Moreira
- *               email:
- *                 type: string
- *                 format: email
- *                 example: bruno.novo@email.com
- *               password:
- *                 type: string
- *                 format: password
- *                 example: novaSenha123
+ *             $ref: '#/components/schemas/UserUpdate'
  *     responses:
  *       200:
  *         description: Usuário atualizado com sucesso.
@@ -222,7 +168,7 @@ router.get(
  *         description: E-mail já utilizado.
  */
 router.put(
-    "/:id",
+    "/user/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";
@@ -248,7 +194,7 @@ router.put(
 
 /**
  * @openapi
- * /users/{id}:
+ * /api/user/{id}:
  *   delete:
  *     summary: Excluir usuário
  *     description: Exclui permanentemente um usuário. Administradores podem excluir qualquer usuário e usuários comuns podem excluir apenas o próprio cadastro.
@@ -275,7 +221,7 @@ router.put(
  *         description: Usuário não encontrado.
  */
 router.delete(
-    "/:id",
+    "/user/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";

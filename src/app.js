@@ -30,9 +30,9 @@ class App {
     }
 
     configureRoutes() {
-        this.registerRoute("/api/users", usersRoutes);
-        this.registerRoute("/api/rooms", roomsRoutes);
-        this.registerRoute("/api/reservations", reservationsRoutes);
+        this.registerRoute("/api", usersRoutes);
+        this.registerRoute("/api", roomsRoutes);
+        this.registerRoute("/api", reservationsRoutes);
         this.registerRoute("/api/auth", authenticationRoutes);
     }
 
