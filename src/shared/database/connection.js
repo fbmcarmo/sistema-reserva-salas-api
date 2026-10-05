@@ -1,13 +1,10 @@
 const { Sequelize } = require("sequelize");
-
 const config = require("../../config/database");
 
 const environment = process.env.NODE_ENV || "development";
 
 class Database {
-
     constructor() {
-
         const databaseConfig = config[environment];
 
         this.connection = new Sequelize(
@@ -18,22 +15,19 @@ class Database {
                 host: databaseConfig.host,
                 port: databaseConfig.port,
                 dialect: databaseConfig.dialect,
-                logging: false
+                dialectOptions: databaseConfig.dialectOptions,
+                logging: false,
             }
         );
     }
 
     async connect() {
-
         await this.connection.authenticate();
 
-        console.log(
-            "Banco de dados conectado com sucesso."
-        );
+        console.log("Banco de dados conectado com sucesso.");
     }
 
     getConnection() {
-
         return this.connection;
     }
 }
