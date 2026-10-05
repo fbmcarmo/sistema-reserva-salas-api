@@ -18,7 +18,7 @@ const authenticationController =
  * /api/auth/register:
  *   post:
  *     summary: Cadastrar usuário
- *     description: Cria uma nova conta de usuário.
+ *     description: Cria uma nova conta de usuário. Não exige autenticação.
  *     tags:
  *       - Authentication
  *     requestBody:
@@ -30,16 +30,6 @@ const authenticationController =
  *     responses:
  *       201:
  *         description: Usuário cadastrado com sucesso.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Usuário cadastrado com sucesso.
- *                 user:
- *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Dados inválidos.
  *       409:
@@ -55,7 +45,7 @@ router.post(
  * /api/auth/login:
  *   post:
  *     summary: Autenticar usuário
- *     description: Realiza o login do usuário e retorna um token JWT.
+ *     description: Realiza o login e retorna um token JWT.
  *     tags:
  *       - Authentication
  *     requestBody:
@@ -79,18 +69,8 @@ router.post(
  *     responses:
  *       200:
  *         description: Login realizado com sucesso.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *                 user:
- *                   $ref: '#/components/schemas/User'
  *       400:
- *         description: E-mail ou senha não informados.
+ *         description: E-mail e senha são obrigatórios.
  *       401:
  *         description: E-mail ou senha inválidos.
  */
@@ -99,12 +79,17 @@ router.post(
     authenticationController.login
 );
 
+// A partir daqui, autenticação é obrigatória.
+router.use(
+    authMiddleware.authenticate
+);
+
 /**
  * @openapi
  * /api/auth/me:
  *   get:
  *     summary: Consultar usuário autenticado
- *     description: Retorna os dados do usuário associado ao token JWT enviado na requisição.
+ *     description: Retorna os dados do usuário autenticado.
  *     tags:
  *       - Authentication
  *     security:
@@ -112,13 +97,6 @@ router.post(
  *     responses:
  *       200:
  *         description: Dados do usuário autenticado.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 user:
- *                   $ref: '#/components/schemas/User'
  *       401:
  *         description: Token não informado ou inválido.
  *       404:
@@ -126,7 +104,6 @@ router.post(
  */
 router.get(
     "/me",
-    authMiddleware.authenticate,
     authenticationController.me
 );
 
