@@ -1,24 +1,22 @@
-const RegisterUserService = require("../services/RegisterUserService");
-const UserRepository = require("../repositories/UserRepository");
-const AppError = require("../../../shared/errors/AppError");
-
 class UserController {
-    constructor({
-        registerUserService = new RegisterUserService(),
-        userRepository = new UserRepository(),
-    } = {}) {
-        this.registerUserService = registerUserService;
-        this.userRepository = userRepository;
+    constructor(userService) {
+        this.userService = userService;
     }
 
     register = async (req, res, next) => {
         try {
-            const user = await this.registerUserService.execute(req.body);
+            const user =
+                await this.userService.register(
+                    req.body
+                );
 
-            return res.status(201).json({
-                message: "Usuário cadastrado com sucesso.",
-                user,
-            });
+            return res
+                .status(201)
+                .json({
+                    message:
+                        "Usuário cadastrado com sucesso.",
+                    user,
+                });
         } catch (error) {
             return next(error);
         }
@@ -26,9 +24,14 @@ class UserController {
 
     findAll = async (req, res, next) => {
         try {
-            const users = await this.userRepository.findAll();
+            const users =
+                await this.userService.findAll();
 
-            return res.status(200).json({ users });
+            return res
+                .status(200)
+                .json({
+                    users,
+                });
         } catch (error) {
             return next(error);
         }
@@ -36,20 +39,51 @@ class UserController {
 
     findById = async (req, res, next) => {
         try {
-            const user = await this.userRepository.findById(req.params.id);
+            const user =
+                await this.userService.findById(
+                    req.params.id
+                );
 
-            if (!user) {
-                throw new AppError("Usuário não encontrado.", 404);
-            }
+            return res
+                .status(200)
+                .json({
+                    user,
+                });
+        } catch (error) {
+            return next(error);
+        }
+    };
 
-            return res.status(200).json({
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                },
-            });
+    update = async (req, res, next) => {
+        try {
+            const user =
+                await this.userService.update(
+                    req.params.id,
+                    req.body
+                );
+
+            return res
+                .status(200)
+                .json({
+                    message:
+                        "Usuário atualizado com sucesso.",
+                    user,
+                });
+        } catch (error) {
+            return next(error);
+        }
+    };
+
+    delete = async (req, res, next) => {
+        try {
+            const result =
+                await this.userService.delete(
+                    req.params.id
+                );
+
+            return res
+                .status(200)
+                .json(result);
         } catch (error) {
             return next(error);
         }

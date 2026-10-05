@@ -1,8 +1,11 @@
 const { DataTypes, Model } = require("sequelize");
+
 const database = require("../../../shared/database/connection");
 
 class User extends Model {
     static initModel() {
+        const sequelize = database.getConnection();
+
         User.init(
             {
                 id: {
@@ -34,9 +37,10 @@ class User extends Model {
                 },
             },
             {
-                sequelize: database.getConnection(),
+                sequelize,
                 modelName: "User",
                 tableName: "users",
+                timestamps: true,
             }
         );
 

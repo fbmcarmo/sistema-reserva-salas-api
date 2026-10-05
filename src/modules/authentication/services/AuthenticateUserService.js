@@ -1,11 +1,26 @@
 const AppError = require("../../../shared/errors/AppError");
-const UserRepository = require("../../users/repositories/UserRepository");
-const PasswordHasher = require("../../../shared/security/PasswordHasher");
-const JwtTokenService = require("../../../shared/security/JwtTokenService");
+
+const PasswordHasher = require(
+    "../../../shared/security/PasswordHasher"
+);
+
+const JwtTokenService = require(
+    "../../../shared/security/JwtTokenService"
+);
+
+const UserRepositoryBridge = require(
+    "../../users/repositories/UserRepositoryBridge"
+);
+
+const SequelizeUserRepository = require(
+    "../../users/repositories/SequelizeUserRepository"
+);
 
 class AuthenticateUserService {
     constructor({
-        userRepository = new UserRepository(),
+        userRepository = new UserRepositoryBridge(
+            new SequelizeUserRepository()
+        ),
         passwordHasher = new PasswordHasher(),
         jwtTokenService = new JwtTokenService(),
     } = {}) {
@@ -14,34 +29,43 @@ class AuthenticateUserService {
         this.jwtTokenService = jwtTokenService;
     }
 
-    async execute({ email, password }) {
-        if (
-            typeof email !== "string" ||
-            typeof password !== "string" ||
-            !email.trim() ||
-            !password
-        ) {
-            throw new AppError("E-mail e senha são obrigatórios.", 400);
-        }
+    async execute({
+        email,
+        password,
+    }) {
+        const normalizedEmail =
+            email.trim().toLowerCase();
 
-        const user = await this.userRepository.findByEmail(
-            email.trim().toLowerCase()
-        );
+        const user =
+            await this.userRepository.findByEmail(
+                normalizedEmail
+            );
 
         if (!user) {
-            throw new AppError("E-mail ou senha inválidos.", 401);
+            throw new AppError(
+                "E-mail ou senha inválidos.",
+                401
+            );
         }
 
-        const passwordMatches = await this.passwordHasher.compare(
-            password,
-            user.password
-        );
+        const passwordMatches =
+            await this.passwordHasher.compare(
+                password,
+                user.password
+            );
 
         if (!passwordMatches) {
-            throw new AppError("E-mail ou senha inválidos.", 401);
+            throw new AppError(
+                "E-mail ou senha inválidos.",
+                401
+            );
         }
 
-        const token = this.jwtTokenService.generateToken(user);
+        const token =
+            this.jwtTokenService.generate({
+                userId: user.id,
+                role: user.role,
+            });
 
         return {
             token,
