@@ -69,7 +69,7 @@ router.use(
  *         description: Usuário sem permissão.
  */
 router.get(
-    "/users",
+    "/",
     authorizationMiddleware.allowRoles(
         "ADMIN"
     ),
@@ -105,7 +105,7 @@ router.get(
  *         description: Usuário não encontrado.
  */
 router.get(
-    "/users/:id",
+    "/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";
@@ -168,7 +168,7 @@ router.get(
  *         description: E-mail já utilizado.
  */
 router.put(
-    "/users/:id",
+    "/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";
@@ -221,7 +221,7 @@ router.put(
  *         description: Usuário não encontrado.
  */
 router.delete(
-    "/users/:id",
+    "/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";
