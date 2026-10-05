@@ -105,7 +105,7 @@ router.get(
  *         description: Usuário não encontrado.
  */
 router.get(
-    "/users/:id",
+    "/user/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";
@@ -168,7 +168,7 @@ router.get(
  *         description: E-mail já utilizado.
  */
 router.put(
-    "/users/:id",
+    "/user/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";
@@ -221,7 +221,7 @@ router.put(
  *         description: Usuário não encontrado.
  */
 router.delete(
-    "/users/:id",
+    "/user/:id",
     (req, res, next) => {
         const isAdmin =
             req.auth.role === "ADMIN";
