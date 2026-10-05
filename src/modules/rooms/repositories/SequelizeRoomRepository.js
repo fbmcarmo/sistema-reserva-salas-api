@@ -1,6 +1,13 @@
+const { Op } = require("sequelize");
+
 const Room = require("../models/Room");
 
+const Reservation = require(
+    "../../reservations/models/Reservation"
+);
+
 class SequelizeRoomRepository {
+
     async create(roomData) {
         return Room.create(roomData);
     }
@@ -37,6 +44,47 @@ class SequelizeRoomRepository {
         await room.destroy();
 
         return room;
+    }
+
+    async checkAvailability(
+        roomId,
+        startDate,
+        endDate
+    ) {
+        const conflictingReservation =
+            await Reservation.findOne({
+                where: {
+                    roomId,
+                    status: "CONFIRMADA",
+
+                    [Op.and]: [
+                        {
+                            startDate: {
+                                [Op.lt]: endDate,
+                            },
+                        },
+                        {
+                            endDate: {
+                                [Op.gt]: startDate,
+                            },
+                        },
+                    ],
+                },
+            });
+
+        return !conflictingReservation;
+    }
+
+    async findReservations(roomId) {
+        return Reservation.findAll({
+            where: {
+                roomId,
+                status: "CONFIRMADA",
+            },
+            order: [
+                ["startDate", "ASC"],
+            ],
+        });
     }
 }
 
