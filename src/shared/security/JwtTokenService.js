@@ -1,39 +1,25 @@
 const jwt = require("jsonwebtoken");
-const AppError = require("../errors/AppError");
 
 class JwtTokenService {
-    constructor() {
-        this.secret = process.env.JWT_SECRET;
-        this.expiresIn = process.env.JWT_EXPIRES_IN || "1h";
 
-        if (!this.secret) {
-            throw new Error("A variável JWT_SECRET não foi definida.");
-        }
-    }
-
-    generateToken(user) {
+    generate(payload) {
         return jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
             {
-                sub: String(user.id),
-                role: user.role,
-            },
-            this.secret,
-            {
-                expiresIn: this.expiresIn,
-                issuer: "sistema-reserva-salas-api",
+                expiresIn:
+                    process.env.JWT_EXPIRES_IN || "1d",
             }
         );
     }
 
-    verifyToken(token) {
-        try {
-            return jwt.verify(token, this.secret, {
-                issuer: "sistema-reserva-salas-api",
-            });
-        } catch (error) {
-            throw new AppError("Token inválido ou expirado.", 401);
-        }
+    verify(token) {
+        return jwt.verify(
+            token,
+            process.env.JWT_SECRET
+        );
     }
 }
 
 module.exports = JwtTokenService;
+
