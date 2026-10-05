@@ -84,6 +84,65 @@ class RoomService {
 
         return room;
     }
+
+
+    async checkAvailability(
+        roomId,
+        startDate,
+        endDate
+    ) {
+        await this.findById(roomId);
+
+        if (!startDate || !endDate) {
+            throw new AppError(
+                "Data inicial e data final são obrigatórias.",
+                400
+            );
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (
+            Number.isNaN(start.getTime()) ||
+            Number.isNaN(end.getTime())
+        ) {
+            throw new AppError(
+                "As datas informadas são inválidas.",
+                400
+            );
+        }
+
+        if (start >= end) {
+            throw new AppError(
+                "A data inicial deve ser anterior à data final.",
+                400
+            );
+        }
+
+        const available =
+            await this.roomRepository.checkAvailability(
+                roomId,
+                start,
+                end
+            );
+
+        return {
+            roomId: Number(roomId),
+            startDate: start,
+            endDate: end,
+            available,
+        };
+    }
+
+    async findReservations(roomId) {
+        await this.findById(roomId);
+
+        return this.roomRepository.findReservations(
+            roomId
+        );
+    }
+
 }
 
 module.exports = RoomService;

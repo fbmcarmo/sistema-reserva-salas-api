@@ -61,6 +61,52 @@ class RoomController {
             return next(error);
         }
     };
+
+    checkAvailability = async (req, res, next) => {
+        try {
+            const { roomId } = req.params;
+
+            const {
+                startDate,
+                endDate,
+            } = req.query;
+
+            const availability =
+                await this.roomService.checkAvailability(
+                    roomId,
+                    startDate,
+                    endDate
+                );
+
+            return res
+                .status(200)
+                .json(availability);
+
+        } catch (error) {
+            return next(error);
+        }
+    };
+
+    findReservations = async (req, res, next) => {
+        try {
+            const { roomId } = req.params;
+
+            const reservations =
+                await this.roomService.findReservations(
+                    roomId
+                );
+
+            return res
+                .status(200)
+                .json({
+                    roomId: Number(roomId),
+                    reservations,
+                });
+
+        } catch (error) {
+            return next(error);
+        }
+    };
 }
 
 module.exports = RoomController;

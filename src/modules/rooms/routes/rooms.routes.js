@@ -179,32 +179,167 @@ class RoomRoutes {
         this.configureRoutes();
     }
 
+
     configureRoutes() {
 
         /*
-         * Todas as rotas de salas exigem autenticação.
-         */
+        * Todas as rotas de salas exigem autenticação.
+        */
         this.router.use(
             authMiddleware.authenticate
         );
 
         /*
-         * Rotas disponíveis para qualquer
-         * usuário autenticado.
-         */
+        * Listar salas.
+        */
         this.router.get(
             "/",
             this.roomController.findAll
         );
 
+        /*
+        * Verificar disponibilidade.
+        */
+
+        /**
+         * @openapi
+         * /api/rooms/{roomId}/availability:
+         *   get:
+         *     summary: Verificar disponibilidade de uma sala
+         *     description: Verifica se uma sala está disponível no período informado.
+         *     tags:
+         *       - Rooms
+         *     security:
+         *       - bearerAuth: []
+         *     parameters:
+         *       - in: path
+         *         name: roomId
+         *         required: true
+         *         description: ID da sala.
+         *         schema:
+         *           type: integer
+         *           example: 1
+         *
+         *       - in: query
+         *         name: startDate
+         *         required: true
+         *         description: Data e hora inicial da consulta.
+         *         schema:
+         *           type: string
+         *           format: date-time
+         *           example: "2026-10-05T10:00:00"
+         *
+         *       - in: query
+         *         name: endDate
+         *         required: true
+         *         description: Data e hora final da consulta.
+         *         schema:
+         *           type: string
+         *           format: date-time
+         *           example: "2026-10-05T12:00:00"
+         *
+         *     responses:
+         *       200:
+         *         description: Disponibilidade da sala consultada.
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 roomId:
+         *                   type: integer
+         *                   example: 1
+         *                 startDate:
+         *                   type: string
+         *                   format: date-time
+         *                   example: "2026-10-05T10:00:00.000Z"
+         *                 endDate:
+         *                   type: string
+         *                   format: date-time
+         *                   example: "2026-10-05T12:00:00.000Z"
+         *                 available:
+         *                   type: boolean
+         *                   example: true
+         *
+         *       400:
+         *         description: Dados da consulta inválidos.
+         *
+         *       401:
+         *         description: Usuário não autenticado.
+         *
+         *       404:
+         *         description: Sala não encontrada.
+         */
+
+
+        this.router.get(
+            "/:roomId/availability",
+            this.roomController.checkAvailability
+        );
+
+        /*
+        * Consultar horários ocupados.
+        */
+    
+        /**
+         * @openapi
+         * /api/rooms/{roomId}/reservations:
+         *   get:
+         *     summary: Consultar horários ocupados de uma sala
+         *     description: Retorna as reservas confirmadas de uma sala, ordenadas pela data de início.
+         *     tags:
+         *       - Rooms
+         *     security:
+         *       - bearerAuth: []
+         *     parameters:
+         *       - in: path
+         *         name: roomId
+         *         required: true
+         *         description: ID da sala.
+         *         schema:
+         *           type: integer
+         *           example: 1
+         *
+         *     responses:
+         *       200:
+         *         description: Lista de reservas confirmadas da sala.
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 roomId:
+         *                   type: integer
+         *                   example: 1
+         *                 reservations:
+         *                   type: array
+         *                   items:
+         *                     $ref: '#/components/schemas/Reservation'
+         *
+         *       401:
+         *         description: Usuário não autenticado.
+         *
+         *       404:
+         *         description: Sala não encontrada.
+         */
+
+
+        this.router.get(
+            "/:roomId/reservations",
+            this.roomController.findReservations
+        );
+
+        /*
+        * Buscar uma sala específica.
+        */
         this.router.get(
             "/:id",
             this.roomController.findById
         );
 
         /*
-         * Rotas administrativas.
-         */
+        * Operações administrativas.
+        */
         this.router.post(
             "/",
             authMiddleware.authorizeAdmin,
