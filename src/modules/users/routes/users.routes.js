@@ -20,7 +20,7 @@ const AuthMiddleware = require(
     "../../../shared/middlewares/AuthMiddleware"
 );
 
-const authorizationMiddleware = require(
+const AuthorizationMiddleware = require(
     "../../../shared/middlewares/AuthorizationMiddleware"
 );
 
@@ -70,7 +70,7 @@ router.use(
  */
 router.get(
     "/",
-    authorizationMiddleware.allowRoles(
+    AuthorizationMiddleware.allowRoles(
         "ADMIN"
     ),
     userController.findAll
