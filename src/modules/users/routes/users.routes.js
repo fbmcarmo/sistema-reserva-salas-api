@@ -16,7 +16,7 @@ const SequelizeUserRepository = require(
     "../repositories/SequelizeUserRepository"
 );
 
-const authMiddleware = require(
+const AuthMiddleware = require(
     "../../../shared/middlewares/AuthMiddleware"
 );
 
@@ -47,7 +47,7 @@ const router = express.Router();
 // Todas as rotas de gerenciamento de usuários
 // exigem autenticação.
 router.use(
-    authMiddleware.authenticate
+    AuthMiddleware.authenticate
 );
 
 /**
