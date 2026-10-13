@@ -1,4 +1,6 @@
+
 const express = require("express");
+const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 
 const swaggerSpec = require("./shared/docs/swagger");
@@ -29,6 +31,30 @@ class App {
     }
 
     configureMiddlewares() {
+        // Configuração do CORS
+        this.app.use(
+            cors({
+                origin: [
+                    "http://localhost:3000",
+                    "http://127.0.0.1:3000"
+                ],
+                methods: [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE",
+                    "OPTIONS"
+                ],
+                allowedHeaders: [
+                    "Content-Type",
+                    "Authorization"
+                ],
+                credentials: true
+            })
+        );
+
+        // Permite receber JSON nas requisições
         this.app.use(express.json());
     }
 
