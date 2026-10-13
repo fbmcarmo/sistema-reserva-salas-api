@@ -30,32 +30,28 @@ class App {
         this.configureRoutes();
     }
 
-    configureMiddlewares() {
-        // Configuração do CORS
+     configureMiddlewares() {
+        const allowedOrigins = [
+            "http://localhost:3000",
+            process.env.FRONTEND_URL,
+        ].filter(Boolean);
+
         this.app.use(
             cors({
-                origin: [
-                    "http://localhost:3000",
-                    "http://127.0.0.1:3000",
-                    "https://sistema-reserva-salas-ten.vercel.app/"
-                ],
-                methods: [
-                    "GET",
-                    "POST",
-                    "PUT",
-                    "PATCH",
-                    "DELETE",
-                    "OPTIONS"
-                ],
-                allowedHeaders: [
-                    "Content-Type",
-                    "Authorization"
-                ],
-                credentials: true
+                origin: (origin, callback) => {
+                    if (!origin || allowedOrigins.includes(origin)) {
+                        return callback(null, true);
+                    }
+
+                    return callback(
+                        new Error(`Origem não permitida pelo CORS: ${origin}`)
+                    );
+                },
+                methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+                allowedHeaders: ["Content-Type", "Authorization"],
             })
         );
 
-        // Permite receber JSON nas requisições
         this.app.use(express.json());
     }
 
