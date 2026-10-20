@@ -1,73 +1,109 @@
 
-import { ReservationRepositoryBridge } from '../../src/modules/reservations/repositories/ReservationRepositoryBridge.js';
+const ReservationRepositoryBridge = require(
+  "../../src/modules/reservations/repositories/ReservationRepositoryBridge"
+);
 
-describe('ReservationRepositoryBridge', () => {
-  let reservationRepositoryBridge;
-  let reservationRepository;
+describe("ReservationRepositoryBridge", () => {
+  let bridge;
+  let repository;
 
   beforeEach(() => {
-    reservationRepository = {
+    repository = {
       create: jest.fn(),
       findAll: jest.fn(),
       findById: jest.fn(),
+      findByUserId: jest.fn(),
       findConflictingReservation: jest.fn(),
-      findAvailableReservations: jest.fn(),
+      update: jest.fn(),
       cancel: jest.fn(),
     };
 
-    reservationRepositoryBridge =
-      new ReservationRepositoryBridge(reservationRepository);
+    bridge = new ReservationRepositoryBridge(repository);
   });
 
-  test('deve delegar a criação de uma reserva ao repositório', async () => {
-    const reservationData = {
+  test("deve delegar criação ao repositório", async () => {
+    const data = {
       userId: 1,
       roomId: 2,
-      startDate: '2026-10-10T10:00:00',
-      endDate: '2026-10-10T11:00:00',
     };
 
-    const savedReservation = {
+    const saved = {
       id: 10,
-      ...reservationData,
+      ...data,
     };
 
-    reservationRepository.create.mockResolvedValue(
-      savedReservation
-    );
+    repository.create.mockResolvedValue(saved);
 
-    const result =
-      await reservationRepositoryBridge.create(reservationData);
+    const result = await bridge.create(data);
 
-    expect(reservationRepository.create)
-      .toHaveBeenCalledWith(reservationData);
-
-    expect(result).toEqual(savedReservation);
+    expect(repository.create).toHaveBeenCalledWith(data);
+    expect(result).toEqual(saved);
   });
 
-  test('deve delegar a consulta de reservas', async () => {
+  test("deve delegar listagem ao repositório", async () => {
     const reservations = [
-      { id: 1, roomId: 2 },
-      { id: 2, roomId: 3 },
+      { id: 1 },
+      { id: 2 },
     ];
 
-    reservationRepository.findAll.mockResolvedValue(reservations);
+    repository.findAll.mockResolvedValue(reservations);
 
-    const result = await reservationRepositoryBridge.findAll();
-
-    expect(reservationRepository.findAll)
-      .toHaveBeenCalledTimes(1);
+    const result = await bridge.findAll();
 
     expect(result).toEqual(reservations);
+    expect(repository.findAll).toHaveBeenCalledTimes(1);
   });
 
-  test('deve propagar erros do repositório', async () => {
-    const error = new Error('Erro ao consultar reservas');
+  test("deve delegar consulta por ID", async () => {
+    repository.findById.mockResolvedValue({
+      id: 1,
+    });
 
-    reservationRepository.findAll.mockRejectedValue(error);
+    const result = await bridge.findById(1);
 
-    await expect(
-      reservationRepositoryBridge.findAll()
-    ).rejects.toThrow('Erro ao consultar reservas');
+    expect(repository.findById).toHaveBeenCalledWith(1);
+    expect(result).toEqual({ id: 1 });
+  });
+
+  test("deve delegar busca por usuário", async () => {
+    repository.findByUserId.mockResolvedValue([
+      { id: 1, userId: 5 },
+    ]);
+
+    const result = await bridge.findByUserId(5);
+
+    expect(repository.findByUserId)
+      .toHaveBeenCalledWith(5);
+
+    expect(result).toHaveLength(1);
+  });
+
+  test("deve delegar verificação de conflito", async () => {
+    const data = {
+      roomId: 2,
+      startDate: new Date("2030-10-10T10:00:00Z"),
+      endDate: new Date("2030-10-10T11:00:00Z"),
+    };
+
+    repository.findConflictingReservation
+      .mockResolvedValue(null);
+
+    const result =
+      await bridge.findConflictingReservation(data);
+
+    expect(repository.findConflictingReservation)
+      .toHaveBeenCalledWith(data);
+
+    expect(result).toBeNull();
+  });
+
+  test("deve propagar erros do repositório", async () => {
+    repository.findAll.mockRejectedValue(
+      new Error("Erro ao consultar reservas")
+    );
+
+    await expect(bridge.findAll()).rejects.toThrow(
+      "Erro ao consultar reservas"
+    );
   });
 });

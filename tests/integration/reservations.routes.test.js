@@ -1,33 +1,44 @@
 
-import request from 'supertest';
-import app from '../../src/app.js';
+const request = require("supertest");
 
-describe('Integração - Rotas de reservas', () => {
-  describe('GET /reservations', () => {
-    test('deve responder à requisição de listagem', async () => {
+const appModule = require("../../src/app");
+
+const app =
+  typeof appModule === "function"
+    ? appModule
+    : appModule.app;
+
+describe("Integração - Rotas de reservas", () => {
+  describe("GET /api/reservations", () => {
+    test("deve exigir autenticação", async () => {
       const response = await request(app)
-        .get('/reservations');
+        .get("/api/reservations");
 
-      // Ajuste conforme a política de autenticação
-      // e o contrato real do endpoint.
-      expect([200, 401, 403]).toContain(response.status);
+      expect(response.status).toBe(401);
     });
   });
 
-  describe('GET /reservations/availability', () => {
-    test('deve receber os parâmetros de disponibilidade', async () => {
+  describe("GET /api/reservations/my", () => {
+    test("deve exigir autenticação", async () => {
       const response = await request(app)
-        .get('/reservations/availability')
-        .query({
-          roomId: 1,
-          startDate: '2026-10-10T10:00:00',
-          endDate: '2026-10-10T12:00:00',
+        .get("/api/reservations/my");
+
+      expect(response.status).toBe(401);
+    });
+  });
+
+  describe("POST /api/reservations", () => {
+    test("deve impedir criação sem autenticação", async () => {
+      const response = await request(app)
+        .post("/api/reservations")
+        .send({
+          userId: 1,
+          roomId: 2,
+          startDate: "2030-10-10T10:00:00Z",
+          endDate: "2030-10-10T11:00:00Z",
         });
 
-      // A resposta depende da implementação real,
-      // da autenticação e do estado do banco de teste.
-      expect(response.status).toBeDefined();
-      expect(typeof response.status).toBe('number');
+      expect(response.status).toBe(401);
     });
   });
 });
