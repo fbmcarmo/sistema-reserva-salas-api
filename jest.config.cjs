@@ -18,4 +18,6 @@ module.exports = {
   ],
 
   coverageDirectory: 'coverage',
+
+  setupFiles: ["<rootDir>/tests/setupEnv.js"],
 };
