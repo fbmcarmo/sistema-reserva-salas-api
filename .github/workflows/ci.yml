@@ -1,0 +1,78 @@
+
+name: CI - Backend
+
+on:
+  push:
+    branches:
+      - main
+      - feature/ci
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Testes do Backend
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_ENV: test
+
+      TEST_DB_HOST: localhost
+      TEST_DB_PORT: "5432"
+      TEST_DB_NAME: sistema_reserva_salas_test
+      TEST_DB_USER: postgres
+      TEST_DB_PASSWORD: postgres_test_123
+
+      # Compatibilidade com ferramentas que utilizam DB_*
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: sistema_reserva_salas_test
+      DB_USER: postgres
+      DB_PASSWORD: postgres_test_123
+
+    services:
+      postgres:
+        image: postgres:16
+
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_test_123
+          POSTGRES_DB: sistema_reserva_salas_test
+
+        ports:
+          - 5432:5432
+
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sistema_reserva_salas_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar sintaxe JavaScript
+        run: |
+          find src -type f -name "*.js" -exec node --check {} \;
+          find tests -type f -name "*.js" -exec node --check {} \;
+
+      - name: Executar migrations do banco de testes
+        run: npx sequelize-cli db:migrate --env test
+
+      - name: Executar testes com Jest
+        run: npm run test:ci

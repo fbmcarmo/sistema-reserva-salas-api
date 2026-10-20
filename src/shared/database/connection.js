@@ -1,11 +1,24 @@
+
+require("dotenv").config({
+    quiet: true,
+});
+
 const { Sequelize } = require("sequelize");
+
 const config = require("../../config/database");
 
-const environment = process.env.NODE_ENV || "development";
+const environment =
+    process.env.NODE_ENV || "development";
 
 class Database {
     constructor() {
         const databaseConfig = config[environment];
+
+        if (!databaseConfig) {
+            throw new Error(
+                `Configuração de banco não encontrada para: ${environment}`
+            );
+        }
 
         this.connection = new Sequelize(
             databaseConfig.database,
@@ -24,7 +37,9 @@ class Database {
     async connect() {
         await this.connection.authenticate();
 
-        console.log("Banco de dados conectado com sucesso.");
+        console.log(
+            "Banco de dados conectado com sucesso."
+        );
     }
 
     getConnection() {
