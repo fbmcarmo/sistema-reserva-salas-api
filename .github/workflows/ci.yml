@@ -16,19 +16,20 @@ permissions:
 
 jobs:
   test:
-    name: Testes do Backend
+    name: Testes e Docker - Backend
     runs-on: ubuntu-latest
 
     env:
       NODE_ENV: test
 
+      # Banco de testes
       TEST_DB_HOST: localhost
       TEST_DB_PORT: "5432"
       TEST_DB_NAME: sistema_reserva_salas_test
       TEST_DB_USER: postgres
       TEST_DB_PASSWORD: postgres_test_123
 
-      # Compatibilidade com ferramentas que utilizam DB_*
+      # Compatibilidade com a aplicação
       DB_HOST: localhost
       DB_PORT: "5432"
       DB_NAME: sistema_reserva_salas_test
@@ -71,8 +72,20 @@ jobs:
           find src -type f -name "*.js" -exec node --check {} \;
           find tests -type f -name "*.js" -exec node --check {} \;
 
-      - name: Executar migrations do banco de testes
+      - name: Executar migrations
         run: npx sequelize-cli db:migrate --env test
 
-      - name: Executar testes com Jest
+      - name: Executar testes Jest
         run: npm run test:ci
+
+      # Validar Dockerfile da API
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construir imagem Docker da API
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: sistema-reserva-salas-api:ci
