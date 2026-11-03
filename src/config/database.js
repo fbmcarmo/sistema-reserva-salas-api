@@ -1,3 +1,4 @@
+const testSSL = process.env.TEST_DB_SSL === "true";
 
 module.exports = {
     development: {
@@ -21,7 +22,7 @@ module.exports = {
         password: process.env.TEST_DB_PASSWORD,
         database: process.env.TEST_DB_NAME,
         host: process.env.TEST_DB_HOST || "localhost",
-        port: Number(process.env.TEST_DB_PORT || 5432),
+        port: Number(process.env.TEST_DB_PORT || 5433),
         dialect: "postgres",
 
         dialectOptions: {
