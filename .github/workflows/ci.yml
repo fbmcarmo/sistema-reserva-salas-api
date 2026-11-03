@@ -6,7 +6,6 @@ on:
     branches:
       - main
       - feature/ci
-
   pull_request:
     branches:
       - main
@@ -22,32 +21,33 @@ jobs:
     env:
       NODE_ENV: test
 
-      # Banco de testes
       TEST_DB_HOST: localhost
       TEST_DB_PORT: "5432"
       TEST_DB_NAME: sistema_reserva_salas_test
       TEST_DB_USER: postgres
       TEST_DB_PASSWORD: postgres_test_123
 
-      # Compatibilidade com a aplicação
       DB_HOST: localhost
       DB_PORT: "5432"
       DB_NAME: sistema_reserva_salas_test
       DB_USER: postgres
       DB_PASSWORD: postgres_test_123
 
+      # Usar somente se a configuração da API reconhecer esta variável.
+      DB_SSL: "false"
+
+      # Chave exclusiva para testes automatizados.
+      JWT_SECRET: chave-temporaria-exclusiva-do-ci
+
     services:
       postgres:
         image: postgres:16
-
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres_test_123
           POSTGRES_DB: sistema_reserva_salas_test
-
         ports:
           - 5432:5432
-
         options: >-
           --health-cmd "pg_isready -U postgres -d sistema_reserva_salas_test"
           --health-interval 10s
@@ -62,7 +62,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "npm"
+          cache: npm
 
       - name: Instalar dependências
         run: npm ci
@@ -70,7 +70,9 @@ jobs:
       - name: Verificar sintaxe JavaScript
         run: |
           find src -type f -name "*.js" -exec node --check {} \;
-          find tests -type f -name "*.js" -exec node --check {} \;
+          if [ -d tests ]; then
+            find tests -type f -name "*.js" -exec node --check {} \;
+          fi
 
       - name: Executar migrations
         run: npx sequelize-cli db:migrate --env test
@@ -78,7 +80,6 @@ jobs:
       - name: Executar testes Jest
         run: npm run test:ci
 
-      # Validar Dockerfile da API
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
 
